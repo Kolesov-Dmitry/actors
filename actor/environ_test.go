@@ -10,7 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_SpawnAndDropChild(t *testing.T) {
+type __testReceiverWithSend struct{}
+
+func (*__testReceiverWithSend) Receive(e *Environ, p *Parcel) {
+	if p.Sender != nil {
+		e.Send(p.Sender, p.Message)
+	}
+}
+
+func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	engine := NewEngine()
 	parentId := engine.Spawn(&__testReceiver{}, "parent")
 	require.NotEqual(t, uuid.UUID{}, parentId)
@@ -42,6 +50,35 @@ func Test_SpawnAndDropChild(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+
+	err := engine.Shutdown(ctx)
+	assert.Nil(t, err)
+}
+
+func Test_EnvironSend(t *testing.T) {
+	engine := NewEngine()
+	receiverId := engine.Spawn(&__testReceiver{}, "receiver")
+	require.NotNil(t, receiverId)
+
+	receiver := engine.disp.ActorById(receiverId).(*actor)
+	require.NotNil(t, receiver)
+
+	senderId := engine.Spawn(&__testReceiverWithSend{}, "sender")
+	require.NotNil(t, senderId)
+
+	done := make(chan struct{})
+
+	ok := receiver.environ.Send(senderId, &__testMessage{done})
+	assert.True(t, ok)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		t.Fatal("message wasn't sent")
+	case <-done:
+	}
 
 	err := engine.Shutdown(ctx)
 	assert.Nil(t, err)
