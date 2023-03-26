@@ -15,6 +15,12 @@ const (
 	hooksStreamSize = 100
 )
 
+type Parcel struct {
+	Sender   *ID
+	Response *Response
+	Message  any
+}
+
 type Engine struct {
 	engineOptions
 
@@ -61,23 +67,23 @@ func (e *Engine) Drop(ctx context.Context, id *ID) error {
 	return err
 }
 
-func (e *Engine) Send(id *ID, msg any) {
-	actor := e.disp.ActorById(id)
-	if actor != nil {
-		actor.Invoke(nil, msg)
+func (e *Engine) Send(id *ID, msg any) bool {
+	parcel := &Parcel{
+		Message: msg,
 	}
+
+	return e.send(id, parcel)
 }
 
 func (e *Engine) SendWithResponse(id *ID, msg any) *Response {
-	actor := e.disp.ActorById(id)
-	if actor == nil {
+	response := newResponse()
+	parcel := &Parcel{
+		Response: response,
+		Message:  msg,
+	}
+	if !e.send(id, parcel) {
 		return nil
 	}
-
-	response := newResponse(e)
-	e.dispatchActor(response)
-
-	actor.Invoke(response.id, msg)
 
 	return response
 }
@@ -92,6 +98,16 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (e *Engine) send(id *ID, parcel *Parcel) bool {
+	actor := e.disp.ActorById(id)
+	if actor == nil {
+		return false
+	}
+
+	actor.Invoke(parcel)
+	return true
 }
 
 func (e *Engine) dispatchActor(a Actor) {
