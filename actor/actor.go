@@ -92,7 +92,7 @@ func (a *actor) Shutdown(ctx context.Context) error {
 	a.childrenLock.Lock()
 	defer a.childrenLock.Unlock()
 
-	for id, _ := range a.children {
+	for id := range a.children {
 		delete(a.children, id)
 	}
 
