@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_SpawnChild(t *testing.T) {
+func Test_SpawnAndDropChild(t *testing.T) {
 	engine := NewEngine()
 	parentId := engine.Spawn(&__testReceiver{}, "parent")
 	require.NotEqual(t, uuid.UUID{}, parentId)
@@ -18,15 +18,29 @@ func Test_SpawnChild(t *testing.T) {
 	parent := engine.disp.ActorById(parentId).(*actor)
 	require.NotNil(t, parent)
 
-	childId := parent.environ.SpawnChild(&__testReceiver{}, "child")
-	require.NotEqual(t, uuid.UUID{}, childId)
+	var childId *ID
 
-	assert.Len(t, parent.children, 1)
+	t.Run("Spawn", func(t *testing.T) {
+		childId = parent.environ.SpawnChild(&__testReceiver{}, "child")
+		require.NotEqual(t, uuid.UUID{}, childId)
 
-	_, ok := parent.children[childId]
-	assert.True(t, ok)
+		assert.Len(t, parent.children, 1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_, ok := parent.children[childId]
+		assert.True(t, ok)
+	})
+
+	t.Run("Drop", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		err := parent.environ.DropChild(ctx, childId)
+		require.Nil(t, err)
+
+		assert.Len(t, parent.children, 0)
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	err := engine.Shutdown(ctx)

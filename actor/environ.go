@@ -1,5 +1,7 @@
 package actor
 
+import "context"
+
 type Environ struct {
 	engine *Engine
 	actor  Actor
@@ -21,4 +23,8 @@ func (e *Environ) SpawnChild(receiver Receiver, name string) *ID {
 	e.actor.AddChild(child)
 
 	return child.id
+}
+
+func (e *Environ) DropChild(ctx context.Context, id *ID) error {
+	return e.actor.DropChild(ctx, id)
 }

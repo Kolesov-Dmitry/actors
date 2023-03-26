@@ -2,6 +2,7 @@ package actor
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 )
@@ -60,6 +61,19 @@ func (a *actor) AddChild(actor Actor) {
 
 	a.children[actor.ID()] = actor
 	a.engine.dispatchActor(actor)
+}
+
+func (a *actor) DropChild(ctx context.Context, id *ID) error {
+	a.childrenLock.Lock()
+	defer a.childrenLock.Unlock()
+
+	if _, ok := a.children[id]; !ok {
+		return fmt.Errorf("child with '%s' was not found", id.String())
+	}
+
+	delete(a.children, id)
+
+	return a.engine.Drop(ctx, id)
 }
 
 func (a *actor) handleEvents(events []any) {

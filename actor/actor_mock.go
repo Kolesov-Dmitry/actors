@@ -13,7 +13,11 @@ func (a *actorMock) ID() *ID {
 func (a *actorMock) Invoke(_ *Parcel) {
 }
 
-func (a *actorMock) AddChild(actor Actor) {
+func (a *actorMock) AddChild(_ Actor) {
+}
+
+func (a *actorMock) DropChild(_ context.Context, _ *ID) error {
+	return nil
 }
 
 func (a *actorMock) Shutdown(_ context.Context) error {
