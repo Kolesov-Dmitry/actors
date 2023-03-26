@@ -14,10 +14,12 @@ type Foo struct {
 }
 
 func (*Foo) Receive(_ *actor.Environ, p *actor.Parcel) {
-	msg, ok := p.Message().(string)
+	msg, ok := p.Message.(string)
 	if ok {
 		fmt.Println(msg)
-		p.Respond("Hi")
+		if p.Response != nil {
+			p.Response.SetValue("Hi")
+		}
 	}
 }
 

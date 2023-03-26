@@ -21,10 +21,12 @@ type __testMessage struct {
 type __testReceiver struct{}
 
 func (*__testReceiver) Receive(_ *Environ, p *Parcel) {
-	msg, ok := p.Message().(*__testMessage)
+	msg, ok := p.Message.(*__testMessage)
 	if ok {
 		close(msg.done)
-		p.Respond(__responseMessage)
+		if p.Response != nil {
+			p.Response.SetValue(__responseMessage)
+		}
 	}
 }
 
@@ -77,7 +79,8 @@ func Test_Send(t *testing.T) {
 	id := engine.Spawn(&__testReceiver{}, "test")
 	require.NotNil(t, id)
 
-	engine.Send(id, &__testMessage{done})
+	ok := engine.Send(id, &__testMessage{done})
+	assert.True(t, ok)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

@@ -28,3 +28,12 @@ func (e *Environ) SpawnChild(receiver Receiver, name string) *ID {
 func (e *Environ) DropChild(ctx context.Context, id *ID) error {
 	return e.actor.DropChild(ctx, id)
 }
+
+func (e *Environ) Send(id *ID, msg any) bool {
+	parcel := &Parcel{
+		Sender:  e.actor.ID(),
+		Message: msg,
+	}
+
+	return e.engine.send(id, parcel)
+}

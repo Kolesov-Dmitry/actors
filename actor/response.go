@@ -14,7 +14,7 @@ func newResponse() *Response {
 	}
 }
 
-func (r *Response) setValue(value any) {
+func (r *Response) SetValue(value any) {
 	r.value <- value
 }
 
