@@ -13,6 +13,9 @@ func (a *actorMock) ID() *ID {
 func (a *actorMock) Invoke(_ *Parcel) {
 }
 
+func (a *actorMock) AddChild(actor Actor) {
+}
+
 func (a *actorMock) Shutdown(_ context.Context) error {
 	return nil
 }

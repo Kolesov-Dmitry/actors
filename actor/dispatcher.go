@@ -9,6 +9,7 @@ import (
 type Actor interface {
 	ID() *ID
 	Invoke(p *Parcel)
+	AddChild(actor Actor)
 	Shutdown(ctx context.Context) error
 }
 

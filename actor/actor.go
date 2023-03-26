@@ -3,6 +3,7 @@ package actor
 import (
 	"context"
 	"log"
+	"sync"
 )
 
 type invokeMessageEvent struct {
@@ -10,7 +11,7 @@ type invokeMessageEvent struct {
 }
 
 type Receiver interface {
-	Receive(p *Parcel)
+	Receive(env *Environ, p *Parcel)
 }
 
 type actor struct {
@@ -18,21 +19,29 @@ type actor struct {
 	id       *ID
 	receiver Receiver
 	events   *eventStream
+	environ  *Environ
+
+	childrenLock sync.Mutex
+	children     map[*ID]Actor
 }
 
 func newActor(e *Engine, recv Receiver, name string, tags ...string) *actor {
 	id := newID(e.address, name, tags...)
-	p := &actor{
+	a := &actor{
 		id:       id,
 		engine:   e,
 		receiver: recv,
 		events:   newEventStream(e.capacity),
+
+		childrenLock: sync.Mutex{},
+		children:     make(map[*ID]Actor),
 	}
+	a.environ = newEnviron(e, a)
 
-	p.events.Start()
-	p.events.Subscribe(p.handleEvents)
+	a.events.Start()
+	a.events.Subscribe(a.handleEvents)
 
-	return p
+	return a
 }
 
 func (a *actor) ID() *ID {
@@ -45,11 +54,19 @@ func (a *actor) Invoke(p *Parcel) {
 	)
 }
 
+func (a *actor) AddChild(actor Actor) {
+	a.childrenLock.Lock()
+	defer a.childrenLock.Unlock()
+
+	a.children[actor.ID()] = actor
+	a.engine.dispatchActor(actor)
+}
+
 func (a *actor) handleEvents(events []any) {
 	for _, event := range events {
 		switch msg := event.(type) {
 		case invokeMessageEvent:
-			a.receiver.Receive(msg.parcel)
+			a.receiver.Receive(a.environ, msg.parcel)
 
 		default:
 			log.Println("receive unsupported event")
@@ -58,5 +75,12 @@ func (a *actor) handleEvents(events []any) {
 }
 
 func (a *actor) Shutdown(ctx context.Context) error {
+	a.childrenLock.Lock()
+	defer a.childrenLock.Unlock()
+
+	for id, _ := range a.children {
+		delete(a.children, id)
+	}
+
 	return a.events.Stop(ctx)
 }

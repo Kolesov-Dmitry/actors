@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -12,21 +13,35 @@ import (
 type Foo struct {
 }
 
-func (*Foo) Receive(p *actor.Parcel) {
+func (*Foo) Receive(_ *actor.Environ, p *actor.Parcel) {
 	msg, ok := p.Message().(string)
 	if ok {
 		fmt.Println(msg)
+		p.Respond("Hi")
 	}
 }
+
+const (
+	produrersSize = 5
+)
 
 func main() {
 	e := actor.NewEngine(actor.WithCapacity(5000))
 	id := e.Spawn(&Foo{}, "test")
 
-	wg := &sync.WaitGroup{}
-	wg.Add(10)
+	resp := e.SendWithResponse(id, "Say Hi!")
 
-	for idx := 0; idx < 10; idx++ {
+	value, err := resp.Result(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(value)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(produrersSize)
+
+	for idx := 0; idx < produrersSize; idx++ {
 		go func() {
 			defer wg.Done()
 

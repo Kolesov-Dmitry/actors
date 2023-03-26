@@ -20,7 +20,7 @@ type __testMessage struct {
 
 type __testReceiver struct{}
 
-func (*__testReceiver) Receive(p *Parcel) {
+func (*__testReceiver) Receive(_ *Environ, p *Parcel) {
 	msg, ok := p.Message().(*__testMessage)
 	if ok {
 		close(msg.done)

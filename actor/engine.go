@@ -65,7 +65,7 @@ func (e *Engine) Send(id *ID, msg any) {
 	actor := e.disp.ActorById(id)
 	if actor != nil {
 		actor.Invoke(
-			newParcel(e, nil, msg),
+			newParcel(e, nil, nil, msg),
 		)
 	}
 }
@@ -78,7 +78,7 @@ func (e *Engine) SendWithResponse(id *ID, msg any) *Response {
 
 	response := newResponse()
 	actor.Invoke(
-		newParcel(e, response, msg),
+		newParcel(e, nil, response, msg),
 	)
 
 	return response

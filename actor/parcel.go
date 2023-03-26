@@ -2,13 +2,15 @@ package actor
 
 type Parcel struct {
 	engine   *Engine
+	sender   *ID
 	response *Response
 	msg      any
 }
 
-func newParcel(engine *Engine, response *Response, msg any) *Parcel {
+func newParcel(engine *Engine, sender *ID, response *Response, msg any) *Parcel {
 	return &Parcel{
 		engine:   engine,
+		sender:   sender,
 		response: response,
 		msg:      msg,
 	}
