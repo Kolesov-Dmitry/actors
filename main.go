@@ -7,10 +7,26 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Kolesov-Dmitry/actors/actor"
+	"github.com/klsvdm/actors/actor"
 )
 
 type Foo struct {
+}
+
+type Bar struct {
+}
+
+type FooOrBar interface {
+	Foo | Bar
+}
+
+func test[T FooOrBar](msg T) {
+	switch any(msg).(type) {
+	case Foo:
+		fmt.Println("its foo")
+	case Bar:
+		fmt.Println("its bar")
+	}
 }
 
 func (*Foo) Receive(_ *actor.Environ, p *actor.Parcel) {
@@ -28,6 +44,11 @@ const (
 )
 
 func main() {
+	test(Foo{})
+	test(Bar{})
+
+	os.Exit(1)
+
 	e := actor.NewEngine(actor.WithCapacity(5000))
 	id := e.Spawn(&Foo{}, "test")
 

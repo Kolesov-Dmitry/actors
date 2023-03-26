@@ -1,4 +1,4 @@
-module github.com/Kolesov-Dmitry/actors
+module github.com/klsvdm/actors
 
 go 1.19
 
