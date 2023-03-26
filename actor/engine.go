@@ -64,7 +64,9 @@ func (e *Engine) Drop(ctx context.Context, id *ID) error {
 func (e *Engine) Send(id *ID, msg any) {
 	actor := e.disp.ActorById(id)
 	if actor != nil {
-		actor.Invoke(nil, msg)
+		actor.Invoke(
+			newParcel(e, nil, msg),
+		)
 	}
 }
 
@@ -74,10 +76,10 @@ func (e *Engine) SendWithResponse(id *ID, msg any) *Response {
 		return nil
 	}
 
-	response := newResponse(e)
-	e.dispatchActor(response)
-
-	actor.Invoke(response.id, msg)
+	response := newResponse()
+	actor.Invoke(
+		newParcel(e, response, msg),
+	)
 
 	return response
 }

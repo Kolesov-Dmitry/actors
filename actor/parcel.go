@@ -1,16 +1,16 @@
 package actor
 
 type Parcel struct {
-	engine *Engine
-	sender *ID
-	msg    any
+	engine   *Engine
+	response *Response
+	msg      any
 }
 
-func newParcel(engine *Engine, sender *ID, msg any) *Parcel {
+func newParcel(engine *Engine, response *Response, msg any) *Parcel {
 	return &Parcel{
-		engine: engine,
-		sender: sender,
-		msg:    msg,
+		engine:   engine,
+		response: response,
+		msg:      msg,
 	}
 }
 
@@ -18,10 +18,10 @@ func (p *Parcel) Message() any {
 	return p.msg
 }
 
-func (p *Parcel) Respond(msg any) {
-	if p.sender == nil {
+func (p *Parcel) Respond(value any) {
+	if p.response == nil {
 		return
 	}
 
-	p.engine.Send(p.sender, msg)
+	p.response.setValue(value)
 }

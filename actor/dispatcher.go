@@ -8,7 +8,7 @@ import (
 
 type Actor interface {
 	ID() *ID
-	Invoke(sender *ID, msg any)
+	Invoke(p *Parcel)
 	Shutdown(ctx context.Context) error
 }
 

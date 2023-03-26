@@ -9,12 +9,6 @@ type invokeMessageEvent struct {
 	parcel *Parcel
 }
 
-func emitInvokeMessageEvent(engine *Engine, sender *ID, msg any) invokeMessageEvent {
-	return invokeMessageEvent{
-		parcel: newParcel(engine, sender, msg),
-	}
-}
-
 type Receiver interface {
 	Receive(p *Parcel)
 }
@@ -45,9 +39,9 @@ func (a *actor) ID() *ID {
 	return a.id
 }
 
-func (a *actor) Invoke(sender *ID, msg any) {
+func (a *actor) Invoke(p *Parcel) {
 	a.events.Dispatch(
-		emitInvokeMessageEvent(a.engine, sender, msg),
+		invokeMessageEvent{parcel: p},
 	)
 }
 

@@ -8,7 +8,7 @@ type ID struct {
 }
 
 const (
-	addressTagsSeparator = "/"
+	actorIdSeparator = "/"
 )
 
 func newID(addr, id string, tags ...string) *ID {
@@ -18,14 +18,14 @@ func newID(addr, id string, tags ...string) *ID {
 	}
 
 	if len(tags) != 0 {
-		actorId.id += addressTagsSeparator + strings.Join(tags, addressTagsSeparator)
+		actorId.id += actorIdSeparator + strings.Join(tags, actorIdSeparator)
 	}
 
 	return actorId
 }
 
 func (id *ID) String() string {
-	return id.addr + addressTagsSeparator + id.id
+	return id.addr + actorIdSeparator + id.id
 }
 
 func (a *ID) Equals(other *ID) bool {
