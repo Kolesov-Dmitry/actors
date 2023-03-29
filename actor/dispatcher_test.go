@@ -2,7 +2,7 @@ package actor
 
 import (
 	"context"
-	"strconv"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ func Test_DispatcherAdd(t *testing.T) {
 	expetedLen := 2
 
 	for idx := 0; idx < expetedLen; idx++ {
-		d.Add(&actorMock{newID("test", "actor", strconv.Itoa(idx+1))})
+		d.Add(&actorMock{newID("test", fmt.Sprintf("actor_%d", idx+1))})
 	}
 
 	assert.Equal(t, expetedLen, len(d.actors))
@@ -35,24 +35,24 @@ func Test_DispatcherRemove(t *testing.T) {
 		Tests  []Test
 	}{
 		Actors: []Actor{
-			&actorMock{newID("test", "actor", "1")},
-			&actorMock{newID("test", "actor", "2")},
-			&actorMock{newID("test", "actor", "3")},
+			&actorMock{newID("test", "actor_1")},
+			&actorMock{newID("test", "actor_2")},
+			&actorMock{newID("test", "actor_3")},
 		},
 		Tests: []Test{
 			{
 				Name:        "Remove existing actor",
-				RemoveId:    newID("test", "actor", "1"),
+				RemoveId:    newID("test", "actor_1"),
 				ExpectedErr: nil,
 			},
 			{
 				Name:        "Remove non existing actor",
-				RemoveId:    newID("test", "actor", "5"),
+				RemoveId:    newID("test", "actor_5"),
 				ExpectedErr: ErrActorDoesNotExists,
 			},
 			{
 				Name:        "Remove already removed actor",
-				RemoveId:    newID("test", "actor", "1"),
+				RemoveId:    newID("test", "actor_1"),
 				ExpectedErr: ErrActorDoesNotExists,
 			},
 		},
@@ -71,7 +71,7 @@ func Test_DispatcherRemove(t *testing.T) {
 }
 
 func Test_DispatcherActorById(t *testing.T) {
-	id := newID("test", "actor", "1")
+	id := newID("test", "actor")
 
 	disp := newDispatcher()
 	disp.Add(&actorMock{id})

@@ -29,7 +29,7 @@ func (d *dispatcher) Add(a Actor) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	id := a.ID().id
+	id := a.ID().name
 	d.actors[id] = a
 }
 
@@ -37,26 +37,24 @@ func (d *dispatcher) Remove(ctx context.Context, id *ID) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	actor, ok := d.actors[id.id]
+	actor, ok := d.actors[id.name]
 	if !ok {
 		return fmt.Errorf("failed to drop actor '%s': %w", id.String(), ErrActorDoesNotExists)
 	}
 
-	err := actor.Shutdown(ctx)
-	delete(d.actors, id.id)
+	delete(d.actors, id.name)
 
-	return err
+	return actor.Shutdown(ctx)
 }
 
 func (d *dispatcher) ActorById(id *ID) Actor {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	if actor, ok := d.actors[id.id]; ok {
+	if actor, ok := d.actors[id.name]; ok {
 		return actor
 	}
 
-	// TODO: return dummyActor instead
 	return nil
 }
 
