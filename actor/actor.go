@@ -26,18 +26,18 @@ type actor struct {
 	children     map[*ID]Actor
 }
 
-func newActor(e *Engine, recv Receiver, name string, tags ...string) *actor {
-	id := newID(e.address, name, tags...)
+func newActor(engine *Engine, parent *ID, recv Receiver, name string, tags ...string) *actor {
+	id := newID(engine.address, name, tags...)
 	a := &actor{
 		id:       id,
-		engine:   e,
+		engine:   engine,
 		receiver: recv,
-		events:   newEventStream(e.capacity),
+		events:   newEventStream(engine.capacity),
 
 		childrenLock: sync.Mutex{},
 		children:     make(map[*ID]Actor),
 	}
-	a.environ = newEnviron(e, a)
+	a.environ = newEnviron(engine, parent, a)
 
 	a.events.Start()
 	a.events.Subscribe(a.handleEvents)

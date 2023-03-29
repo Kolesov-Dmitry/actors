@@ -51,7 +51,7 @@ func (e *Engine) Spawn(receiver Receiver, name string) *ID {
 		return nil
 	}
 
-	actor := newActor(e, receiver, name)
+	actor := newActor(e, nil, receiver, name)
 
 	e.dispatchActor(actor)
 
