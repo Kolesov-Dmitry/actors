@@ -26,8 +26,8 @@ type actor struct {
 	children     map[*ID]Actor
 }
 
-func newActor(engine *Engine, parent *ID, recv Receiver, name string, tags ...string) *actor {
-	id := newID(engine.address, name, tags...)
+func newActor(engine *Engine, parent *ID, recv Receiver, name string) *actor {
+	id := newID(engine.address, name)
 	a := &actor{
 		id:       id,
 		engine:   engine,
