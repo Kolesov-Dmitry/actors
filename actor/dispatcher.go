@@ -42,10 +42,9 @@ func (d *dispatcher) Remove(ctx context.Context, id *ID) error {
 		return fmt.Errorf("failed to drop actor '%s': %w", id.String(), ErrActorDoesNotExists)
 	}
 
-	err := actor.Shutdown(ctx)
 	delete(d.actors, id.id)
 
-	return err
+	return actor.Shutdown(ctx)
 }
 
 func (d *dispatcher) ActorById(id *ID) Actor {
@@ -56,7 +55,6 @@ func (d *dispatcher) ActorById(id *ID) Actor {
 		return actor
 	}
 
-	// TODO: return dummyActor instead
 	return nil
 }
 

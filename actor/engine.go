@@ -3,16 +3,10 @@ package actor
 import (
 	"context"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 var (
 	ErrActorDoesNotExists = errors.New("actor with provided ID does not exists")
-)
-
-const (
-	hooksStreamSize = 100
 )
 
 type Parcel struct {
@@ -24,8 +18,7 @@ type Parcel struct {
 type Engine struct {
 	engineOptions
 
-	disp        *dispatcher
-	eventStream *eventStream
+	disp *dispatcher
 }
 
 func NewEngine(opts ...EngineOption) *Engine {
@@ -34,16 +27,9 @@ func NewEngine(opts ...EngineOption) *Engine {
 	engine := &Engine{
 		engineOptions: *options,
 		disp:          newDispatcher(),
-		eventStream:   newEventStream(hooksStreamSize),
 	}
 
-	engine.eventStream.Start()
-
 	return engine
-}
-
-func (e *Engine) Subscribe(handler EventHandlerFunc) uuid.UUID {
-	return e.eventStream.Subscribe(handler)
 }
 
 func (e *Engine) Spawn(receiver Receiver, name string) *ID {
@@ -59,12 +45,9 @@ func (e *Engine) Spawn(receiver Receiver, name string) *ID {
 }
 
 func (e *Engine) Drop(ctx context.Context, id *ID) error {
-	err := e.disp.Remove(ctx, id)
-	if !errors.Is(err, ErrActorDoesNotExists) {
-		e.eventStream.Dispatch(DroppedEvent{ID: id})
-	}
+	e.Send(id, AboutToStopEvent{})
 
-	return err
+	return e.disp.Remove(ctx, id)
 }
 
 func (e *Engine) Send(id *ID, msg any) bool {
@@ -93,10 +76,6 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 		return err
 	}
 
-	if err := e.eventStream.Stop(ctx); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -112,5 +91,5 @@ func (e *Engine) send(id *ID, parcel *Parcel) bool {
 
 func (e *Engine) dispatchActor(a Actor) {
 	e.disp.Add(a)
-	e.eventStream.Dispatch(StartedEvent{ID: a.ID()})
+	e.Send(a.ID(), StartedEvent{})
 }
