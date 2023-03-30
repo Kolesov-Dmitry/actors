@@ -68,7 +68,7 @@ func Test_EnvironSend(t *testing.T) {
 
 	done := make(chan struct{})
 
-	ok := receiver.environ.Send(senderId, &__testMessage{done})
+	ok := receiver.environ.Send(senderId, &__testMessage{done: done})
 	assert.True(t, ok)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

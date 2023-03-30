@@ -21,7 +21,12 @@ func (e *Environ) SpawnChild(receiver Receiver, name string) *ID {
 		return nil
 	}
 
-	child := newActor(e.engine, e.actor.ID(), receiver, name)
+	child := newActor(e.engine, &actorConfig{
+		receiver:   receiver,
+		name:       name,
+		parent:     e.actor.ID(),
+		middleware: e.engine.middleware,
+	})
 	e.actor.AddChild(child)
 
 	return child.id

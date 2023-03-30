@@ -15,7 +15,8 @@ const (
 )
 
 type __testMessage struct {
-	done chan struct{}
+	done     chan struct{}
+	response string
 }
 
 type __testReceiver struct{}
@@ -25,7 +26,7 @@ func (*__testReceiver) Receive(_ *Environ, p *Parcel) {
 	if ok {
 		close(msg.done)
 		if p.Response != nil {
-			p.Response.SetValue(__responseMessage)
+			p.Response.SetValue(msg.response)
 		}
 	}
 }
@@ -79,7 +80,10 @@ func Test_Send(t *testing.T) {
 	id := engine.Spawn(&__testReceiver{}, "test")
 	require.NotNil(t, id)
 
-	ok := engine.Send(id, &__testMessage{done})
+	ok := engine.Send(id, &__testMessage{
+		done:     done,
+		response: __responseMessage,
+	})
 	assert.True(t, ok)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -106,7 +110,10 @@ func Test_SendWithResponse(t *testing.T) {
 	id := engine.Spawn(&__testReceiver{}, "test")
 	require.NotNil(t, id)
 
-	response := engine.SendWithResponse(id, &__testMessage{done})
+	response := engine.SendWithResponse(id, &__testMessage{
+		done:     done,
+		response: __responseMessage,
+	})
 	require.NotNil(t, response)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -118,6 +125,51 @@ func Test_SendWithResponse(t *testing.T) {
 	responseMessage, ok := value.(string)
 	require.True(t, ok)
 	assert.Equal(t, __responseMessage, responseMessage)
+
+	err = engine.Drop(ctx, id)
+	assert.Nil(t, err)
+
+	err = engine.Shutdown(ctx)
+	assert.Nil(t, err)
+}
+
+const __middlewareResponse = "middleware"
+
+func __testMiddleware(next ReceiveFunc) ReceiveFunc {
+	return func(env *Environ, p *Parcel) {
+		if msg, ok := p.Message.(*__testMessage); ok {
+			msg.response = __middlewareResponse
+		}
+
+		next(env, p)
+	}
+}
+
+func Test_Middleware(t *testing.T) {
+	engine := NewEngine(WithMiddleware(
+		__testMiddleware,
+	))
+
+	done := make(chan struct{})
+
+	id := engine.Spawn(&__testReceiver{}, "test")
+	require.NotNil(t, id)
+
+	response := engine.SendWithResponse(id, &__testMessage{
+		done:     done,
+		response: __responseMessage,
+	})
+	require.NotNil(t, response)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	value, err := response.Result(ctx)
+	require.Nil(t, err)
+
+	responseMessage, ok := value.(string)
+	require.True(t, ok)
+	assert.Equal(t, __middlewareResponse, responseMessage)
 
 	err = engine.Drop(ctx, id)
 	assert.Nil(t, err)

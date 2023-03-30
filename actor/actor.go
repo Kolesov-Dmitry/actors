@@ -15,29 +15,41 @@ type Receiver interface {
 	Receive(env *Environ, p *Parcel)
 }
 
+type ReceiveFunc func(env *Environ, p *Parcel)
+type Middleware func(next ReceiveFunc) ReceiveFunc
+
+type actorConfig struct {
+	receiver   Receiver
+	name       string
+	parent     *ID
+	middleware []Middleware
+}
+
 type actor struct {
-	engine   *Engine
-	id       *ID
-	receiver Receiver
-	events   *eventStream
-	environ  *Environ
+	engine     *Engine
+	id         *ID
+	receiver   Receiver
+	middleware []Middleware
+	events     *eventStream
+	environ    *Environ
 
 	childrenLock sync.Mutex
 	children     map[*ID]Actor
 }
 
-func newActor(engine *Engine, parent *ID, recv Receiver, name string) *actor {
-	id := newID(engine.address, name)
+func newActor(engine *Engine, cfg *actorConfig) *actor {
+	id := newID(engine.address, cfg.name)
 	a := &actor{
-		id:       id,
-		engine:   engine,
-		receiver: recv,
-		events:   newEventStream(engine.capacity),
+		id:         id,
+		engine:     engine,
+		receiver:   cfg.receiver,
+		middleware: cfg.middleware,
+		events:     newEventStream(engine.capacity),
 
 		childrenLock: sync.Mutex{},
 		children:     make(map[*ID]Actor),
 	}
-	a.environ = newEnviron(engine, parent, a)
+	a.environ = newEnviron(engine, cfg.parent, a)
 
 	a.events.Start()
 	a.events.Subscribe(a.handleEvents)
@@ -80,7 +92,13 @@ func (a *actor) handleEvents(events []any) {
 	for _, event := range events {
 		switch msg := event.(type) {
 		case invokeMessageEvent:
-			a.receiver.Receive(a.environ, msg.parcel)
+			if len(a.middleware) == 0 {
+				a.receiver.Receive(a.environ, msg.parcel)
+				return
+			}
+
+			fn := applyMiddleware(a.receiver.Receive, a.middleware...)
+			fn(a.environ, msg.parcel)
 
 		default:
 			log.Println("receive unsupported event")
@@ -97,4 +115,11 @@ func (a *actor) Shutdown(ctx context.Context) error {
 	}
 
 	return a.events.Stop(ctx)
+}
+
+func applyMiddleware(rcv ReceiveFunc, middleware ...Middleware) ReceiveFunc {
+	for i := len(middleware) - 1; i >= 0; i-- {
+		rcv = middleware[i](rcv)
+	}
+	return rcv
 }

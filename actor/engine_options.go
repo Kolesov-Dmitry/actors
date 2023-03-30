@@ -6,8 +6,9 @@ const (
 )
 
 type engineOptions struct {
-	address  string
-	capacity int
+	address    string
+	capacity   int
+	middleware []Middleware
 }
 
 type EngineOption func(opts *engineOptions)
@@ -34,5 +35,11 @@ func WithAddress(addr string) EngineOption {
 func WithCapacity(capacity int) EngineOption {
 	return func(opts *engineOptions) {
 		opts.capacity = capacity
+	}
+}
+
+func WithMiddleware(ms ...Middleware) EngineOption {
+	return func(opts *engineOptions) {
+		opts.middleware = ms
 	}
 }
