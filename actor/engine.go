@@ -37,7 +37,12 @@ func (e *Engine) Spawn(receiver Receiver, name string) *ID {
 		return nil
 	}
 
-	actor := newActor(e, nil, receiver, name)
+	actor := newActor(e, &actorConfig{
+		receiver:   receiver,
+		name:       name,
+		parent:     nil,
+		middleware: e.middleware,
+	})
 
 	e.dispatchActor(actor)
 
