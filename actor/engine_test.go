@@ -2,7 +2,7 @@ package actor
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -39,7 +39,7 @@ func Test_Spawn(t *testing.T) {
 
 	t.Run("Spawn", func(t *testing.T) {
 		for idx := 0; idx < expectedActors; idx++ {
-			id := engine.Spawn(&__testReceiver{}, fmt.Sprintf("actor/test/%d", idx))
+			id := engine.Spawn(&__testReceiver{}, "actor", "test", strconv.Itoa(idx))
 			assert.NotNil(t, id)
 
 			actorsIds[idx] = id
