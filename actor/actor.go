@@ -21,6 +21,7 @@ type Middleware func(next ReceiveFunc) ReceiveFunc
 type actorConfig struct {
 	receiver   Receiver
 	name       string
+	tags       []string
 	parent     *ID
 	middleware []Middleware
 }
@@ -38,7 +39,7 @@ type actor struct {
 }
 
 func newActor(engine *Engine, cfg *actorConfig) *actor {
-	id := newID(engine.address, cfg.name)
+	id := newID(cfg.name, cfg.tags...)
 	a := &actor{
 		id:         id,
 		engine:     engine,

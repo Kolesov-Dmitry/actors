@@ -1,12 +1,10 @@
 package actor
 
 const (
-	localhostAddress = "localhost"
-	capacityDefault  = 1
+	capacityDefault = 1
 )
 
 type engineOptions struct {
-	address    string
 	capacity   int
 	middleware []Middleware
 }
@@ -15,7 +13,6 @@ type EngineOption func(opts *engineOptions)
 
 func engineOpts(opts ...EngineOption) *engineOptions {
 	options := &engineOptions{
-		address:  localhostAddress,
 		capacity: capacityDefault,
 	}
 
@@ -24,12 +21,6 @@ func engineOpts(opts ...EngineOption) *engineOptions {
 	}
 
 	return options
-}
-
-func WithAddress(addr string) EngineOption {
-	return func(opts *engineOptions) {
-		opts.address = addr
-	}
 }
 
 func WithCapacity(capacity int) EngineOption {

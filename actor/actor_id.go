@@ -1,27 +1,21 @@
 package actor
 
 type ID struct {
-	addr string
-	name string
+	value string
 }
 
-const (
-	actorIdSeparator = "/"
-)
-
-func newID(addr, name string) *ID {
+func newID(name string, tags ...string) *ID {
 	actorId := &ID{
-		addr: addr,
-		name: name,
+		value: name,
+	}
+
+	for _, tag := range tags {
+		actorId.value += "/" + tag
 	}
 
 	return actorId
 }
 
 func (id *ID) String() string {
-	return id.addr + actorIdSeparator + id.name
-}
-
-func (a *ID) Equals(other *ID) bool {
-	return a.addr == other.addr && a.name == other.name
+	return id.value
 }

@@ -32,7 +32,7 @@ func NewEngine(opts ...EngineOption) *Engine {
 	return engine
 }
 
-func (e *Engine) Spawn(receiver Receiver, name string) *ID {
+func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) *ID {
 	if receiver == nil || name == "" {
 		return nil
 	}
@@ -40,6 +40,7 @@ func (e *Engine) Spawn(receiver Receiver, name string) *ID {
 	actor := newActor(e, &actorConfig{
 		receiver:   receiver,
 		name:       name,
+		tags:       tags,
 		parent:     nil,
 		middleware: e.middleware,
 	})
