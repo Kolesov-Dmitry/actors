@@ -20,7 +20,8 @@ func (*__testReceiverWithSend) Receive(e *Environ, p *Parcel) {
 
 func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	engine := NewEngine()
-	parentId := engine.Spawn(&__testReceiver{}, "parent")
+	parentId, err := engine.Spawn(&__testReceiver{}, "parent")
+	require.Nil(t, err)
 	require.NotEqual(t, uuid.UUID{}, parentId)
 
 	parent := engine.disp.ActorById(parentId).(*actor)
@@ -51,19 +52,21 @@ func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err := engine.Shutdown(ctx)
+	err = engine.Shutdown(ctx)
 	assert.Nil(t, err)
 }
 
 func Test_EnvironSend(t *testing.T) {
 	engine := NewEngine()
-	receiverId := engine.Spawn(&__testReceiver{}, "receiver")
+	receiverId, err := engine.Spawn(&__testReceiver{}, "receiver")
+	require.Nil(t, err)
 	require.NotNil(t, receiverId)
 
 	receiver := engine.disp.ActorById(receiverId).(*actor)
 	require.NotNil(t, receiver)
 
-	senderId := engine.Spawn(&__testReceiverWithSend{}, "sender")
+	senderId, err := engine.Spawn(&__testReceiverWithSend{}, "sender")
+	require.Nil(t, err)
 	require.NotNil(t, senderId)
 
 	done := make(chan struct{})
@@ -80,6 +83,6 @@ func Test_EnvironSend(t *testing.T) {
 	case <-done:
 	}
 
-	err := engine.Shutdown(ctx)
+	err = engine.Shutdown(ctx)
 	assert.Nil(t, err)
 }

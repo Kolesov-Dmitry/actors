@@ -25,12 +25,18 @@ func newDispatcher() *dispatcher {
 	}
 }
 
-func (d *dispatcher) Add(a Actor) {
+func (d *dispatcher) Add(a Actor) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
 	id := a.ID().String()
+	if _, ok := d.actors[id]; ok {
+		return fmt.Errorf("actor with '%s' ID already exists", id)
+	}
+
 	d.actors[id] = a
+
+	return nil
 }
 
 func (d *dispatcher) Remove(ctx context.Context, id *ID) error {

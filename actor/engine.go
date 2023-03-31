@@ -3,6 +3,7 @@ package actor
 import (
 	"context"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -32,9 +33,13 @@ func NewEngine(opts ...EngineOption) *Engine {
 	return engine
 }
 
-func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) *ID {
-	if receiver == nil || name == "" {
-		return nil
+func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) (*ID, error) {
+	if receiver == nil {
+		return nil, fmt.Errorf("Receiver was not provided")
+	}
+
+	if name == "" {
+		return nil, fmt.Errorf("actor name was not provided")
 	}
 
 	actor := newActor(e, &actorConfig{
@@ -47,7 +52,7 @@ func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) *ID {
 
 	e.dispatchActor(actor)
 
-	return actor.id
+	return actor.id, nil
 }
 
 func (e *Engine) Drop(ctx context.Context, id *ID) error {
@@ -77,6 +82,21 @@ func (e *Engine) SendWithResponse(id *ID, msg any) *Response {
 	return response
 }
 
+func (e *Engine) Broadcast(group BroadcastGroup, msg any) bool {
+	parcel := &Parcel{
+		Message: msg,
+	}
+
+	result := true
+	for _, id := range group.ids {
+		if !e.send(id, parcel) {
+			result = false
+		}
+	}
+
+	return result
+}
+
 func (e *Engine) Shutdown(ctx context.Context) error {
 	if err := e.disp.Shutdown(ctx); err != nil {
 		return err
@@ -95,7 +115,12 @@ func (e *Engine) send(id *ID, parcel *Parcel) bool {
 	return true
 }
 
-func (e *Engine) dispatchActor(a Actor) {
-	e.disp.Add(a)
+func (e *Engine) dispatchActor(a Actor) error {
+	if err := e.disp.Add(a); err != nil {
+		return err
+	}
+
 	e.Send(a.ID(), StartedEvent{})
+
+	return nil
 }
