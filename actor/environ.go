@@ -7,11 +7,11 @@ import (
 
 type Environ struct {
 	engine *Engine
-	parent *ID
+	parent ID
 	actor  Actor
 }
 
-func newEnviron(e *Engine, p *ID, a Actor) *Environ {
+func newEnviron(e *Engine, p ID, a Actor) *Environ {
 	return &Environ{
 		engine: e,
 		parent: p,
@@ -19,13 +19,13 @@ func newEnviron(e *Engine, p *ID, a Actor) *Environ {
 	}
 }
 
-func (e *Environ) SpawnChild(receiver Receiver, name string) (*ID, error) {
+func (e *Environ) SpawnChild(receiver Receiver, name string) (ID, error) {
 	if receiver == nil {
-		return nil, fmt.Errorf("Receiver was not provided")
+		return ID{}, fmt.Errorf("Receiver was not provided")
 	}
 
 	if name == "" {
-		return nil, fmt.Errorf("actor name was not provided")
+		return ID{}, fmt.Errorf("actor name was not provided")
 	}
 
 	child := newActor(e.engine, &actorConfig{
@@ -39,11 +39,11 @@ func (e *Environ) SpawnChild(receiver Receiver, name string) (*ID, error) {
 	return child.id, nil
 }
 
-func (e *Environ) DropChild(ctx context.Context, id *ID) error {
+func (e *Environ) DropChild(ctx context.Context, id ID) error {
 	return e.actor.DropChild(ctx, id)
 }
 
-func (e *Environ) Send(id *ID, msg any) bool {
+func (e *Environ) Send(id ID, msg any) bool {
 	parcel := &Parcel{
 		Sender:  e.actor.ID(),
 		Message: msg,
@@ -52,6 +52,6 @@ func (e *Environ) Send(id *ID, msg any) bool {
 	return e.engine.send(id, parcel)
 }
 
-func (e *Environ) Parent() *ID {
+func (e *Environ) Parent() ID {
 	return e.parent
 }

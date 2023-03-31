@@ -3,10 +3,10 @@ package actor
 import "context"
 
 type actorMock struct {
-	id *ID
+	id ID
 }
 
-func (a *actorMock) ID() *ID {
+func (a *actorMock) ID() ID {
 	return a.id
 }
 
@@ -16,7 +16,7 @@ func (a *actorMock) Invoke(_ *Parcel) {
 func (a *actorMock) AddChild(_ Actor) {
 }
 
-func (a *actorMock) DropChild(_ context.Context, _ *ID) error {
+func (a *actorMock) DropChild(_ context.Context, _ ID) error {
 	return nil
 }
 

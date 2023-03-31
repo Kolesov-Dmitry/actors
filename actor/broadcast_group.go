@@ -1,10 +1,10 @@
 package actor
 
 type BroadcastGroup struct {
-	ids []*ID
+	ids []ID
 }
 
-func NewBroadcastGroup(ids ...*ID) BroadcastGroup {
+func NewBroadcastGroup(ids ...ID) BroadcastGroup {
 	return BroadcastGroup{
 		ids: ids,
 	}

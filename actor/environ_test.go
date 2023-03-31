@@ -13,7 +13,7 @@ import (
 type __testReceiverWithSend struct{}
 
 func (*__testReceiverWithSend) Receive(e *Environ, p *Parcel) {
-	if p.Sender != nil {
+	if !p.Sender.IsEmpty() {
 		e.Send(p.Sender, p.Message)
 	}
 }
@@ -27,7 +27,7 @@ func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	parent := engine.disp.ActorById(parentId).(*actor)
 	require.NotNil(t, parent)
 
-	var childId *ID
+	var childId ID
 
 	t.Run("Spawn", func(t *testing.T) {
 		childId, err = parent.environ.SpawnChild(&__testReceiver{}, "child")

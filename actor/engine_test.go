@@ -35,13 +35,13 @@ func Test_Spawn(t *testing.T) {
 	engine := NewEngine()
 
 	expectedActors := 10
-	actorsIds := make([]*ID, expectedActors)
+	actorsIds := make([]ID, expectedActors)
 
 	t.Run("Spawn", func(t *testing.T) {
 		for idx := 0; idx < expectedActors; idx++ {
 			id, err := engine.Spawn(&__testReceiver{}, "actor", "test", strconv.Itoa(idx))
 			assert.Nil(t, err)
-			assert.NotNil(t, id)
+			assert.False(t, id.IsEmpty())
 
 			actorsIds[idx] = id
 		}
@@ -52,11 +52,11 @@ func Test_Spawn(t *testing.T) {
 	t.Run("Spawn with empty receiver", func(t *testing.T) {
 		id, err := engine.Spawn(nil, "empty_receiver")
 		assert.NotNil(t, err)
-		assert.Nil(t, id)
+		assert.True(t, id.IsEmpty())
 
 		id, err = engine.Spawn(&__testReceiver{}, "")
 		assert.NotNil(t, err)
-		assert.Nil(t, id)
+		assert.True(t, id.IsEmpty())
 	})
 
 	t.Run("Drop", func(t *testing.T) {

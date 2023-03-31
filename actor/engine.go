@@ -11,7 +11,7 @@ var (
 )
 
 type Parcel struct {
-	Sender   *ID
+	Sender   ID
 	Response *Response
 	Message  any
 }
@@ -33,20 +33,20 @@ func NewEngine(opts ...EngineOption) *Engine {
 	return engine
 }
 
-func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) (*ID, error) {
+func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) (ID, error) {
 	if receiver == nil {
-		return nil, fmt.Errorf("Receiver was not provided")
+		return ID{}, fmt.Errorf("Receiver was not provided")
 	}
 
 	if name == "" {
-		return nil, fmt.Errorf("actor name was not provided")
+		return ID{}, fmt.Errorf("actor name was not provided")
 	}
 
 	actor := newActor(e, &actorConfig{
 		receiver:   receiver,
 		name:       name,
 		tags:       tags,
-		parent:     nil,
+		parent:     ID{},
 		middleware: e.middleware,
 	})
 
@@ -55,13 +55,13 @@ func (e *Engine) Spawn(receiver Receiver, name string, tags ...string) (*ID, err
 	return actor.id, nil
 }
 
-func (e *Engine) Drop(ctx context.Context, id *ID) error {
+func (e *Engine) Drop(ctx context.Context, id ID) error {
 	e.Send(id, AboutToStopEvent{})
 
 	return e.disp.Remove(ctx, id)
 }
 
-func (e *Engine) Send(id *ID, msg any) bool {
+func (e *Engine) Send(id ID, msg any) bool {
 	parcel := &Parcel{
 		Message: msg,
 	}
@@ -69,7 +69,7 @@ func (e *Engine) Send(id *ID, msg any) bool {
 	return e.send(id, parcel)
 }
 
-func (e *Engine) SendWithResponse(id *ID, msg any) *Response {
+func (e *Engine) SendWithResponse(id ID, msg any) *Response {
 	response := newResponse()
 	parcel := &Parcel{
 		Response: response,
@@ -105,7 +105,7 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (e *Engine) send(id *ID, parcel *Parcel) bool {
+func (e *Engine) send(id ID, parcel *Parcel) bool {
 	actor := e.disp.ActorById(id)
 	if actor == nil {
 		return false

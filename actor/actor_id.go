@@ -4,8 +4,8 @@ type ID struct {
 	value string
 }
 
-func newID(name string, tags ...string) *ID {
-	actorId := &ID{
+func newID(name string, tags ...string) ID {
+	actorId := ID{
 		value: name,
 	}
 
@@ -16,6 +16,10 @@ func newID(name string, tags ...string) *ID {
 	return actorId
 }
 
-func (id *ID) String() string {
+func (id ID) IsEmpty() bool {
+	return id.value == ""
+}
+
+func (id ID) String() string {
 	return id.value
 }
