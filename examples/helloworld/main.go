@@ -8,12 +8,16 @@ import (
 	"github.com/klsvdm/actors/actor"
 )
 
+// Define type of the message
+// which will be sent to the actor
 type Message struct {
 	Text string
 }
 
+// Define the actor type
 type HelloWorld struct{}
 
+// Actor should implement Receive method
 func (h *HelloWorld) Receive(_ *actor.Environ, p *actor.Parcel) {
 	switch msg := p.Message.(type) {
 	case *Message:
@@ -22,16 +26,17 @@ func (h *HelloWorld) Receive(_ *actor.Environ, p *actor.Parcel) {
 }
 
 func main() {
+	// 1. create engine
 	engine := actor.NewEngine()
 
-	// 1. spawn the actor
+	// 2. spawn the actor
 	actorId, err := engine.Spawn(&HelloWorld{}, "hello_world")
 	if err != nil {
 		fmt.Printf("unable to spawn the actor: %s\n", err)
 		os.Exit(1)
 	}
 
-	// 2. send a bunch of messages
+	// 3. send a bunch of messages
 	for i := 1; i <= 10; i++ {
 		message := &Message{
 			Text: fmt.Sprintf("Hello World! - %d", i),

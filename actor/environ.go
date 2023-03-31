@@ -52,6 +52,10 @@ func (e *Environ) Send(id ID, msg any) bool {
 	return e.engine.send(id, parcel)
 }
 
+func (e *Environ) Self() ID {
+	return e.actor.ID()
+}
+
 func (e *Environ) Parent() ID {
 	return e.parent
 }
