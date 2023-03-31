@@ -22,20 +22,20 @@ type actorConfig struct {
 	receiver   Receiver
 	name       string
 	tags       []string
-	parent     *ID
+	parent     ID
 	middleware []Middleware
 }
 
 type actor struct {
 	engine     *Engine
-	id         *ID
+	id         ID
 	receiver   Receiver
 	middleware []Middleware
 	events     *eventStream
 	environ    *Environ
 
 	childrenLock sync.Mutex
-	children     map[*ID]Actor
+	children     map[ID]Actor
 }
 
 func newActor(engine *Engine, cfg *actorConfig) *actor {
@@ -48,7 +48,7 @@ func newActor(engine *Engine, cfg *actorConfig) *actor {
 		events:     newEventStream(engine.capacity),
 
 		childrenLock: sync.Mutex{},
-		children:     make(map[*ID]Actor),
+		children:     make(map[ID]Actor),
 	}
 	a.environ = newEnviron(engine, cfg.parent, a)
 
@@ -58,7 +58,7 @@ func newActor(engine *Engine, cfg *actorConfig) *actor {
 	return a
 }
 
-func (a *actor) ID() *ID {
+func (a *actor) ID() ID {
 	return a.id
 }
 
@@ -76,7 +76,7 @@ func (a *actor) AddChild(actor Actor) {
 	a.engine.dispatchActor(actor)
 }
 
-func (a *actor) DropChild(ctx context.Context, id *ID) error {
+func (a *actor) DropChild(ctx context.Context, id ID) error {
 	a.childrenLock.Lock()
 	defer a.childrenLock.Unlock()
 

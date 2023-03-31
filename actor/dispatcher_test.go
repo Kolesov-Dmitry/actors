@@ -24,7 +24,7 @@ func Test_DispatcherAdd(t *testing.T) {
 func Test_DispatcherRemove(t *testing.T) {
 	type Test struct {
 		Name        string
-		RemoveId    *ID
+		RemoveId    ID
 		ExpectedErr error
 	}
 

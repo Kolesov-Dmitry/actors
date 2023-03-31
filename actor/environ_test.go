@@ -13,23 +13,25 @@ import (
 type __testReceiverWithSend struct{}
 
 func (*__testReceiverWithSend) Receive(e *Environ, p *Parcel) {
-	if p.Sender != nil {
+	if !p.Sender.IsEmpty() {
 		e.Send(p.Sender, p.Message)
 	}
 }
 
 func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	engine := NewEngine()
-	parentId := engine.Spawn(&__testReceiver{}, "parent")
+	parentId, err := engine.Spawn(&__testReceiver{}, "parent")
+	require.Nil(t, err)
 	require.NotEqual(t, uuid.UUID{}, parentId)
 
 	parent := engine.disp.ActorById(parentId).(*actor)
 	require.NotNil(t, parent)
 
-	var childId *ID
+	var childId ID
 
 	t.Run("Spawn", func(t *testing.T) {
-		childId = parent.environ.SpawnChild(&__testReceiver{}, "child")
+		childId, err = parent.environ.SpawnChild(&__testReceiver{}, "child")
+		require.Nil(t, err)
 		require.NotEqual(t, uuid.UUID{}, childId)
 
 		assert.Len(t, parent.children, 1)
@@ -51,19 +53,21 @@ func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err := engine.Shutdown(ctx)
+	err = engine.Shutdown(ctx)
 	assert.Nil(t, err)
 }
 
 func Test_EnvironSend(t *testing.T) {
 	engine := NewEngine()
-	receiverId := engine.Spawn(&__testReceiver{}, "receiver")
+	receiverId, err := engine.Spawn(&__testReceiver{}, "receiver")
+	require.Nil(t, err)
 	require.NotNil(t, receiverId)
 
 	receiver := engine.disp.ActorById(receiverId).(*actor)
 	require.NotNil(t, receiver)
 
-	senderId := engine.Spawn(&__testReceiverWithSend{}, "sender")
+	senderId, err := engine.Spawn(&__testReceiverWithSend{}, "sender")
+	require.Nil(t, err)
 	require.NotNil(t, senderId)
 
 	done := make(chan struct{})
@@ -80,6 +84,6 @@ func Test_EnvironSend(t *testing.T) {
 	case <-done:
 	}
 
-	err := engine.Shutdown(ctx)
+	err = engine.Shutdown(ctx)
 	assert.Nil(t, err)
 }

@@ -35,12 +35,13 @@ func Test_Spawn(t *testing.T) {
 	engine := NewEngine()
 
 	expectedActors := 10
-	actorsIds := make([]*ID, expectedActors)
+	actorsIds := make([]ID, expectedActors)
 
 	t.Run("Spawn", func(t *testing.T) {
 		for idx := 0; idx < expectedActors; idx++ {
-			id := engine.Spawn(&__testReceiver{}, "actor", "test", strconv.Itoa(idx))
-			assert.NotNil(t, id)
+			id, err := engine.Spawn(&__testReceiver{}, "actor", "test", strconv.Itoa(idx))
+			assert.Nil(t, err)
+			assert.False(t, id.IsEmpty())
 
 			actorsIds[idx] = id
 		}
@@ -49,11 +50,13 @@ func Test_Spawn(t *testing.T) {
 	})
 
 	t.Run("Spawn with empty receiver", func(t *testing.T) {
-		id := engine.Spawn(nil, "empty_receiver")
-		assert.Nil(t, id)
+		id, err := engine.Spawn(nil, "empty_receiver")
+		assert.NotNil(t, err)
+		assert.True(t, id.IsEmpty())
 
-		id = engine.Spawn(&__testReceiver{}, "")
-		assert.Nil(t, id)
+		id, err = engine.Spawn(&__testReceiver{}, "")
+		assert.NotNil(t, err)
+		assert.True(t, id.IsEmpty())
 	})
 
 	t.Run("Drop", func(t *testing.T) {
@@ -77,7 +80,8 @@ func Test_Send(t *testing.T) {
 
 	done := make(chan struct{})
 
-	id := engine.Spawn(&__testReceiver{}, "test")
+	id, err := engine.Spawn(&__testReceiver{}, "test")
+	require.Nil(t, err)
 	require.NotNil(t, id)
 
 	ok := engine.Send(id, &__testMessage{
@@ -95,7 +99,7 @@ func Test_Send(t *testing.T) {
 	case <-done:
 	}
 
-	err := engine.Drop(ctx, id)
+	err = engine.Drop(ctx, id)
 	assert.Nil(t, err)
 
 	err = engine.Shutdown(ctx)
@@ -107,7 +111,8 @@ func Test_SendWithResponse(t *testing.T) {
 
 	done := make(chan struct{})
 
-	id := engine.Spawn(&__testReceiver{}, "test")
+	id, err := engine.Spawn(&__testReceiver{}, "test")
+	require.Nil(t, err)
 	require.NotNil(t, id)
 
 	response := engine.SendWithResponse(id, &__testMessage{
@@ -152,7 +157,8 @@ func Test_Middleware(t *testing.T) {
 
 	done := make(chan struct{})
 
-	id := engine.Spawn(&__testReceiver{}, "test")
+	id, err := engine.Spawn(&__testReceiver{}, "test")
+	require.Nil(t, err)
 	require.NotNil(t, id)
 
 	response := engine.SendWithResponse(id, &__testMessage{
@@ -173,6 +179,72 @@ func Test_Middleware(t *testing.T) {
 
 	err = engine.Drop(ctx, id)
 	assert.Nil(t, err)
+
+	err = engine.Shutdown(ctx)
+	assert.Nil(t, err)
+}
+
+type __broadcastMessage struct {
+	doneOne chan struct{}
+	doneTwo chan struct{}
+}
+
+type __broadcastOneReceiver struct{}
+
+func (*__broadcastOneReceiver) Receive(_ *Environ, p *Parcel) {
+	msg, ok := p.Message.(*__broadcastMessage)
+	if ok {
+		close(msg.doneOne)
+	}
+}
+
+type __broadcastTwoReceiver struct{}
+
+func (*__broadcastTwoReceiver) Receive(_ *Environ, p *Parcel) {
+	msg, ok := p.Message.(*__broadcastMessage)
+	if ok {
+		close(msg.doneTwo)
+	}
+}
+
+func Test_Broadcast(t *testing.T) {
+	engine := NewEngine()
+
+	doneOne := make(chan struct{})
+	doneTwo := make(chan struct{})
+
+	idone, err := engine.Spawn(&__broadcastOneReceiver{}, "test", "one")
+	require.Nil(t, err)
+	require.NotNil(t, idone)
+
+	idtwo, err := engine.Spawn(&__broadcastTwoReceiver{}, "test", "two")
+	require.Nil(t, err)
+	require.NotNil(t, idtwo)
+
+	group := NewBroadcastGroup(idone, idtwo)
+
+	ok := engine.Broadcast(group,
+		&__broadcastMessage{
+			doneOne: doneOne,
+			doneTwo: doneTwo,
+		},
+	)
+	require.True(t, ok)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		t.Fatal("message wasn't sent to reciever one")
+	case <-doneOne:
+	}
+
+	select {
+	case <-ctx.Done():
+		t.Fatal("message wasn't sent sent to reciever two")
+	case <-doneTwo:
+	}
 
 	err = engine.Shutdown(ctx)
 	assert.Nil(t, err)

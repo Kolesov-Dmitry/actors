@@ -7,10 +7,10 @@ import (
 )
 
 type Actor interface {
-	ID() *ID
+	ID() ID
 	Invoke(p *Parcel)
 	AddChild(actor Actor)
-	DropChild(ctx context.Context, id *ID) error
+	DropChild(ctx context.Context, id ID) error
 	Shutdown(ctx context.Context) error
 }
 
@@ -25,15 +25,21 @@ func newDispatcher() *dispatcher {
 	}
 }
 
-func (d *dispatcher) Add(a Actor) {
+func (d *dispatcher) Add(a Actor) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
 	id := a.ID().String()
+	if _, ok := d.actors[id]; ok {
+		return fmt.Errorf("actor with '%s' ID already exists", id)
+	}
+
 	d.actors[id] = a
+
+	return nil
 }
 
-func (d *dispatcher) Remove(ctx context.Context, id *ID) error {
+func (d *dispatcher) Remove(ctx context.Context, id ID) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -47,7 +53,7 @@ func (d *dispatcher) Remove(ctx context.Context, id *ID) error {
 	return actor.Shutdown(ctx)
 }
 
-func (d *dispatcher) ActorById(id *ID) Actor {
+func (d *dispatcher) ActorById(id ID) Actor {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 

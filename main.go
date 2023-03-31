@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -29,7 +30,10 @@ const (
 
 func main() {
 	e := actor.NewEngine(actor.WithCapacity(5000))
-	id := e.Spawn(&Foo{}, "test")
+	id, err := e.Spawn(&Foo{}, "test")
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	resp := e.SendWithResponse(id, "Say Hi!")
 
