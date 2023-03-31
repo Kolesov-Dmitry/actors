@@ -1,6 +1,9 @@
 package actor
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type Environ struct {
 	engine *Engine
@@ -16,9 +19,13 @@ func newEnviron(e *Engine, p *ID, a Actor) *Environ {
 	}
 }
 
-func (e *Environ) SpawnChild(receiver Receiver, name string) *ID {
-	if receiver == nil || name == "" {
-		return nil
+func (e *Environ) SpawnChild(receiver Receiver, name string) (*ID, error) {
+	if receiver == nil {
+		return nil, fmt.Errorf("Receiver was not provided")
+	}
+
+	if name == "" {
+		return nil, fmt.Errorf("actor name was not provided")
 	}
 
 	child := newActor(e.engine, &actorConfig{
@@ -29,7 +36,7 @@ func (e *Environ) SpawnChild(receiver Receiver, name string) *ID {
 	})
 	e.actor.AddChild(child)
 
-	return child.id
+	return child.id, nil
 }
 
 func (e *Environ) DropChild(ctx context.Context, id *ID) error {

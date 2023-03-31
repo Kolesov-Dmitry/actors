@@ -30,7 +30,8 @@ func Test_EnvironSpawnAndDropChild(t *testing.T) {
 	var childId *ID
 
 	t.Run("Spawn", func(t *testing.T) {
-		childId = parent.environ.SpawnChild(&__testReceiver{}, "child")
+		childId, err = parent.environ.SpawnChild(&__testReceiver{}, "child")
+		require.Nil(t, err)
 		require.NotEqual(t, uuid.UUID{}, childId)
 
 		assert.Len(t, parent.children, 1)
