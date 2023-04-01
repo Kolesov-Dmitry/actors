@@ -52,4 +52,12 @@ func main() {
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, os.Interrupt)
 	<-exit
+
+	// 5. gracefull shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	if err := engine.Shutdown(ctx); err != nil {
+		fmt.Println(err)
+	}
 }
