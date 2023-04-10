@@ -75,6 +75,7 @@ func (d *dispatcher) Shutdown(ctx context.Context) error {
 		default:
 		}
 
+		actor.Invoke(&Parcel{Message: AboutToStopEvent{}})
 		if err := actor.Shutdown(ctx); err != nil {
 			return err
 		}
