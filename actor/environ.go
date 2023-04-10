@@ -19,7 +19,7 @@ func newEnviron(e *Engine, p ID, a Actor) *Environ {
 	}
 }
 
-func (e *Environ) SpawnChild(receiver Receiver, name string) (ID, error) {
+func (e *Environ) SpawnChild(receiver Receiver, name string, tags ...string) (ID, error) {
 	if receiver == nil {
 		return ID{}, fmt.Errorf("Receiver was not provided")
 	}
@@ -31,6 +31,7 @@ func (e *Environ) SpawnChild(receiver Receiver, name string) (ID, error) {
 	child := newActor(e.engine, &actorConfig{
 		receiver:   receiver,
 		name:       name,
+		tags:       tags,
 		parent:     e.actor.ID(),
 		middleware: e.engine.middleware,
 	})
